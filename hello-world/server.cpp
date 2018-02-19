@@ -45,7 +45,13 @@ int main()
 	serv_addr.sin_family = AF_INET;
 	serv_addr.sin_addr.s_addr = inet_addr("127.0.0.1");
 	serv_addr.sin_port = htons(8080);
-	bind(servfd, (struct sockaddr*)&serv_addr, sizeof(serv_addr));
+	int ret = bind(servfd, (struct sockaddr*)&serv_addr, sizeof(serv_addr));
+	//printf("bind port:%d return value: %d", servfd, ret);
+	if (ret == -1)
+	{
+		printf("bind failed: Please try it later\n");
+		return 0;
+	}
 	listen(servfd, 20);
 
 	struct sockaddr_in clnt_addr;
