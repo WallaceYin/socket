@@ -45,9 +45,7 @@ const char response[] =
 	"HTTP/1.1 200 OK\r\n"
 	"Content-Length: %d\r\n"
 	"Content-Type:%s\r\n"
-	"\r\n"
-	"%s"
-	"\0";
+	"\r\n";
 
 void sigint_handler(int signum)
 {
@@ -87,25 +85,25 @@ int main()
 		memset(_rev, 0, sizeof(_rev));
 		read(clnt_sock, _rev, sizeof(_rev)-1);
 		char *_header;
+		//printf("Request received: %s\n", _rev);
 		_header = strtok(_rev, "\r\n");
 		char *_url;
 		_url = strtok(_header, " ");
 		_url = strtok(NULL, " ");
 		_url = (char *)_url + 1;
 		int fd = open(_url, O_RDONLY);
-		//printf("url is %s\n", _url);
 		char _body[65536];
 		char buf[65536];
 		memset(_body, 0, sizeof(_body));
-		int _size;
+		int body_size;
 		if (fd == -1)
 		{
 			strcpy(_body, "<html> 404 </html>\0");
-			_size = strlen(_body);
+			body_size = strlen(_body);
 		}
 		else
 		{
-			_size = read(fd, _body, MAXLENGTH);
+			body_size = read(fd, _body, MAXLENGTH);
 		}
 
 		string ftype, _type, str_url;
@@ -117,13 +115,18 @@ int main()
 		map<string, string>::iterator it;
 		it = filetype.find(ftype);
 		if (it == filetype.end())
-			printf("An Error happened\n");
+		{
+			//printf("An Error happened\n");
+			strcpy(_body, "<html> 404 </html>\0");
+			body_size = strlen(_body);
+			_type = "text/html";
+		}
 		else
 			_type = filetype[ftype];
-		//_type = "image/ico";
-		//FIXME
-		sprintf(buf, response, _size, _type.c_str(), _body);
-		write(clnt_sock, buf, strlen(buf));
+		sprintf(buf, response, _size, _type.c_str());
+		int head_size = strlen(buf);
+		memcpy(buf + head_size, _body, body_size);
+		write(clnt_sock, buf, head_size + body_size);
 		close(clnt_sock);
 	}
 
